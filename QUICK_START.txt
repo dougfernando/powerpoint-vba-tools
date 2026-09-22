@@ -1,0 +1,11 @@
+Leia README.md para requisitos e recuperacao.
+
+1. Habilite acesso ao projeto VBA somente para gerar o add-in.
+2. Salve seu trabalho e feche o PowerPoint.
+3. powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-ppam.ps1
+4. powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-addin.ps1
+5. Abra PowerPoint > PowerPoint Tools > Abrir macros.
+6. Para atualizar, edite src e repita os passos 2 a 4.
+
+O uso do add-in nao exige acesso ao projeto VBA; exige macros autorizadas.
+Testes offline: powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\test-offline.ps1

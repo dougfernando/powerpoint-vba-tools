@@ -1,0 +1,107 @@
+[
+  {
+    "id": "Cmd_Text_DisableAutofit",
+    "module": "modCommands_Text",
+    "category": "Texto",
+    "label": "Desativar ajuste automatico",
+    "description": "Desativa o ajuste automatico de texto em toda a apresentacao."
+  },
+  {
+    "id": "Cmd_Text_CopyIntoFilledShape",
+    "module": "modCommands_Text",
+    "category": "Texto",
+    "label": "Copiar texto para forma",
+    "description": "Selecione duas formas: uma sem preenchimento e outra preenchida. A origem sera excluida."
+  },
+  {
+    "id": "Cmd_Text_SetStandardMargins",
+    "module": "modCommands_Text",
+    "category": "Texto",
+    "label": "Aplicar margens padrao",
+    "description": "Aplica margens de 0,2 cm nas formas selecionadas."
+  },
+  {
+    "id": "Cmd_Text_Swap",
+    "module": "modCommands_Text",
+    "category": "Texto",
+    "label": "Trocar textos",
+    "description": "Troca os textos de duas formas selecionadas."
+  },
+  {
+    "id": "Cmd_Text_RemoveManualLineBreaks",
+    "module": "modCommands_Text",
+    "category": "Texto",
+    "label": "Remover quebras manuais",
+    "description": "Substitui por espacos as quebras de linha do unico shape selecionado."
+  },
+  {
+    "id": "Cmd_Shape_DeleteByFillColor",
+    "module": "modCommands_Shapes",
+    "category": "Formas",
+    "label": "Excluir pela cor",
+    "description": "Exclui formas pela cor de preenchimento da referencia selecionada."
+  },
+  {
+    "id": "Cmd_Shape_DeleteSimilar",
+    "module": "modCommands_Shapes",
+    "category": "Formas",
+    "label": "Excluir formas semelhantes",
+    "description": "Exclui formas com posicao e tamanho semelhantes a referencia selecionada."
+  },
+  {
+    "id": "Cmd_Shape_RemoveOutsideSlide",
+    "module": "modCommands_Shapes",
+    "category": "Formas",
+    "label": "Remover formas fora do slide",
+    "description": "Remove formas completamente fora dos limites dos slides."
+  },
+  {
+    "id": "Cmd_Table_ConvertToShapes",
+    "module": "modCommands_Tables",
+    "category": "Tabelas",
+    "label": "Converter tabela em formas",
+    "description": "Cria formas das celulas da tabela selecionada; mantem a tabela original."
+  },
+  {
+    "id": "Cmd_QA_ShowPlaceholderIDs",
+    "module": "modCommands_QA",
+    "category": "QA",
+    "label": "Mostrar IDs de placeholders",
+    "description": "Mostra os identificadores dos placeholders do slide ativo."
+  },
+  {
+    "id": "Cmd_QA_MarkNonAllowedFonts",
+    "module": "modCommands_QA",
+    "category": "QA",
+    "label": "Marcar fontes nao permitidas",
+    "description": "Marca textos com fontes fora da lista configurada."
+  },
+  {
+    "id": "Cmd_QA_ClearMarkers",
+    "module": "modCommands_QA",
+    "category": "QA",
+    "label": "Limpar marcadores",
+    "description": "Remove os marcadores de revisao criados pelo add-in."
+  },
+  {
+    "id": "Cmd_QA_CheckForbiddenClientNames",
+    "module": "modCommands_QA",
+    "category": "QA",
+    "label": "Verificar nomes de clientes",
+    "description": "Procura termos da lista configurada de clientes e marca ocorrencias."
+  },
+  {
+    "id": "Cmd_Excel_ExportPresentation",
+    "module": "modCommands_Excel",
+    "category": "Excel",
+    "label": "Exportar textos",
+    "description": "Exporta textos para Excel ao lado da apresentacao salva."
+  },
+  {
+    "id": "Cmd_Excel_UpdatePresentation",
+    "module": "modCommands_Excel",
+    "category": "Excel",
+    "label": "Atualizar textos pelo Excel",
+    "description": "Seleciona um arquivo Excel e atualiza textos na apresentacao."
+  }
+]

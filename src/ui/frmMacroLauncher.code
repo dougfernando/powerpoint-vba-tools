@@ -1,0 +1,222 @@
+Option Explicit
+
+Private focusMacroListOnActivate As Boolean
+
+Private Sub UserForm_Initialize()
+    CancelNotificationClear
+    ApplyVisualStyle
+    ConfigureKeyboard
+    modMacroLauncher.PopulateCategories Me.cboCategory
+    ShowResult "Aguardando execucao.", "waiting"
+End Sub
+
+Public Sub PrepareForDisplay()
+    focusMacroListOnActivate = True
+End Sub
+
+Private Sub UserForm_Activate()
+    If focusMacroListOnActivate Then
+        focusMacroListOnActivate = False
+        If Me.lstMacro.ListCount > 0 Then Me.lstMacro.SetFocus
+    End If
+End Sub
+
+Private Sub cboCategory_Change()
+    modMacroLauncher.PopulateCommands Me.lstMacro, CStr(Me.cboCategory.Value)
+End Sub
+
+Private Sub lstMacro_Change()
+    CancelNotificationClear
+    CancelPendingConfirmation
+    Me.lblDescription.Caption = ""
+    If Me.lstMacro.ListIndex >= 0 Then Me.lblDescription.Caption = Me.lstMacro.List(Me.lstMacro.ListIndex, 2)
+    ShowResult "Aguardando execucao.", "waiting"
+End Sub
+
+Private Sub lstMacro_DblClick(ByVal Cancel As MSForms.ReturnBoolean)
+    If Me.cmdRun.Enabled Then cmdRun_Click
+End Sub
+
+Private Sub cmdRun_Click()
+    Dim resultMessage As String
+    Dim errorMessage As String
+    On Error GoTo Failed
+    CancelNotificationClear
+    Me.cmdRun.Enabled = False
+    Me.cmdClose.Enabled = False
+    ShowResult "Executando...", "running"
+    Me.Repaint
+    resultMessage = modMacroLauncher.MacroLauncherRunSelected(Me.lstMacro)
+    ShowResult resultMessage, "complete"
+Done:
+    Me.cmdRun.Enabled = True
+    Me.cmdClose.Enabled = True
+    ScheduleNotificationClear
+    Exit Sub
+Failed:
+    errorMessage = Err.Description
+    ShowResult "Falha inesperada: " & errorMessage, "error"
+    Resume Done
+End Sub
+
+Private Sub cmdClose_Click()
+    CancelNotificationClear
+    CancelPendingConfirmation
+    Me.Hide
+End Sub
+
+Private Sub UserForm_QueryClose(Cancel As Integer, CloseMode As Integer)
+    If CloseMode = 0 Then
+        Cancel = True
+        If Me.cmdRun.Enabled Then
+            CancelNotificationClear
+            CancelPendingConfirmation
+            Me.Hide
+        End If
+    End If
+End Sub
+
+Public Sub ClearResult()
+    Me.lblResult.Caption = vbNullString
+    Me.lblResult.BackColor = RGB(238, 242, 247)
+    Me.lblResult.ForeColor = RGB(71, 85, 105)
+End Sub
+
+Public Sub DisplayResult(ByVal message As String, ByVal state As String)
+    CancelNotificationClear
+    ShowResult message, state
+End Sub
+
+Private Sub ConfigureKeyboard()
+    Me.cboCategory.TabIndex = 0
+    Me.lstMacro.TabIndex = 1
+    Me.cmdRun.TabIndex = 2
+    Me.cmdClose.TabIndex = 3
+
+    Me.lblCategory.Accelerator = "C"
+    Me.lblMacro.Accelerator = "M"
+    Me.cmdRun.Accelerator = "E"
+    Me.cmdClose.Accelerator = "F"
+
+    Me.cmdRun.Default = True
+    Me.cmdClose.Cancel = True
+    Me.cboCategory.ControlTipText = "Alt+C. Use as setas para escolher uma categoria."
+    Me.lstMacro.ControlTipText = "Alt+M. Digite o inicio do nome ou use as setas; Enter executa."
+    Me.lstMacro.MatchEntry = 1
+    Me.lstMacro.IntegralHeight = True
+    Me.cmdRun.ControlTipText = "Executar a macro selecionada (Enter ou Alt+E)."
+    Me.cmdClose.ControlTipText = "Fechar esta janela (Esc ou Alt+F)."
+End Sub
+
+Private Sub cboCategory_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
+    If HandleKeyboardShortcut(CLng(KeyCode), Shift) Then KeyCode = 0
+End Sub
+
+Private Sub lstMacro_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
+    If HandleKeyboardShortcut(CLng(KeyCode), Shift) Then KeyCode = 0
+End Sub
+
+Private Sub cmdRun_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
+    If HandleKeyboardShortcut(CLng(KeyCode), Shift) Then KeyCode = 0
+End Sub
+
+Private Sub cmdClose_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
+    If HandleKeyboardShortcut(CLng(KeyCode), Shift) Then KeyCode = 0
+End Sub
+
+Private Function HandleKeyboardShortcut(ByVal keyValue As Long, ByVal Shift As Integer) As Boolean
+    If (Shift And 4) = 0 Then Exit Function
+
+    Select Case keyValue
+        Case vbKeyC
+            Me.cboCategory.SetFocus
+            Me.cboCategory.DropDown
+        Case vbKeyM
+            Me.lstMacro.SetFocus
+        Case vbKeyE
+            If Me.cmdRun.Enabled Then cmdRun_Click
+        Case vbKeyF
+            If Me.cmdClose.Enabled Then cmdClose_Click
+        Case Else
+            Exit Function
+    End Select
+    HandleKeyboardShortcut = True
+End Function
+
+Private Sub ApplyVisualStyle()
+    Dim control As Object
+
+    Me.BackColor = RGB(247, 249, 252)
+    For Each control In Me.Controls
+        On Error Resume Next
+        control.Font.Name = "Segoe UI"
+        control.Font.Size = 9
+        On Error GoTo 0
+    Next control
+
+    With Me.lblTitle
+        .Font.Size = 14
+        .Font.Bold = True
+        .ForeColor = RGB(31, 41, 55)
+    End With
+
+    With Me.lblHint
+        .TextAlign = 3
+        .ForeColor = RGB(100, 116, 139)
+    End With
+
+    StyleSectionLabel Me.lblDescriptionTitle
+    StyleSectionLabel Me.lblResultTitle
+
+    Me.lblDescription.ForeColor = RGB(71, 85, 105)
+    Me.lblDescription.WordWrap = True
+
+    With Me.lblResult
+        .BackStyle = 1
+        .BorderStyle = 1
+        .WordWrap = True
+    End With
+
+    Me.cmdRun.Font.Bold = True
+End Sub
+
+Private Sub StyleSectionLabel(ByVal target As Object)
+    target.Font.Size = 8
+    target.Font.Bold = True
+    target.ForeColor = RGB(71, 85, 105)
+End Sub
+
+Private Sub ShowResult(ByVal message As String, ByVal state As String)
+    Dim normalized As String
+    normalized = LCase$(Trim$(message))
+
+    If Len(message) = 0 Then
+        Me.lblResult.Caption = vbNullString
+    Else
+        Me.lblResult.Caption = "  " & message
+    End If
+    Select Case LCase$(state)
+        Case "running"
+            Me.lblResult.BackColor = RGB(255, 247, 218)
+            Me.lblResult.ForeColor = RGB(120, 74, 0)
+        Case "error"
+            Me.lblResult.BackColor = RGB(254, 226, 226)
+            Me.lblResult.ForeColor = RGB(153, 27, 27)
+        Case "complete"
+            If Left$(normalized, 5) = "falha" Then
+                Me.lblResult.BackColor = RGB(254, 226, 226)
+                Me.lblResult.ForeColor = RGB(153, 27, 27)
+            ElseIf InStr(1, normalized, "nao executada", vbTextCompare) > 0 Or _
+                   InStr(1, normalized, "cancelada", vbTextCompare) > 0 Or _
+                   Left$(normalized, 7) = "aguarde" Then
+                Me.lblResult.BackColor = RGB(255, 247, 218)
+                Me.lblResult.ForeColor = RGB(120, 74, 0)
+            Else
+                Me.lblResult.BackColor = RGB(220, 252, 231)
+                Me.lblResult.ForeColor = RGB(22, 101, 52)
+            End If
+        Case Else
+            Me.lblResult.BackColor = RGB(238, 242, 247)
+            Me.lblResult.ForeColor = RGB(71, 85, 105)
+    End Select
+End Sub

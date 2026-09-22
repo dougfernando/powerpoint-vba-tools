@@ -1,0 +1,17 @@
+{
+  "name": "frmMacroLauncher", "caption": "DFS Tools", "width": 440, "height": 418,
+  "controls": [
+    {"type":"Label", "name":"lblTitle", "caption":"Executar macro", "left":16, "top":12, "width":210, "height":24},
+    {"type":"Label", "name":"lblHint", "caption":"Enter executa  |  Esc fecha", "left":230, "top":17, "width":194, "height":16},
+    {"type":"Label", "name":"lblCategory", "caption":"Categoria", "left":16, "top":48, "width":100, "height":16},
+    {"type":"ComboBox", "name":"cboCategory", "left":16, "top":65, "width":408, "height":22, "style":2},
+    {"type":"Label", "name":"lblMacro", "caption":"Macro", "left":16, "top":99, "width":100, "height":16},
+    {"type":"ListBox", "name":"lstMacro", "left":16, "top":116, "width":408, "height":100},
+    {"type":"Label", "name":"lblDescriptionTitle", "caption":"SOBRE ESTA MACRO", "left":16, "top":226, "width":160, "height":14},
+    {"type":"Label", "name":"lblDescription", "caption":"", "left":16, "top":244, "width":408, "height":30},
+    {"type":"Label", "name":"lblResultTitle", "caption":"RESULTADO", "left":16, "top":283, "width":160, "height":14},
+    {"type":"Label", "name":"lblResult", "caption":"Aguardando execucao.", "left":16, "top":301, "width":408, "height":42},
+    {"type":"CommandButton", "name":"cmdRun", "caption":"Executar", "left":226, "top":352, "width":94, "height":26},
+    {"type":"CommandButton", "name":"cmdClose", "caption":"Fechar", "left":330, "top":352, "width":94, "height":26}
+  ]
+}

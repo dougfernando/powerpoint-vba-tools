@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<customUI xmlns="http://schemas.microsoft.com/office/2006/01/customui">
+  <ribbon><tabs><tab id="douglasToolsTab" label="DFS Tools">
+    <group id="douglasToolsMacros" label="Macros">
+      <button id="douglasToolsLauncher" label="Abrir macros" size="large" imageMso="MacroPlay" onAction="RibbonShowMacroLauncher"/>
+      <button id="douglasToolsReload" label="Recarregar macros" size="large" imageMso="RefreshAll" onAction="RibbonReloadMacros"/>
+    </group>
+  </tab></tabs></ribbon>
+</customUI>
