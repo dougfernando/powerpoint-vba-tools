@@ -1,6 +1,7 @@
 Option Explicit
 
 Private focusMacroListOnActivate As Boolean
+Private configuringScope As Boolean
 
 Private Sub UserForm_Initialize()
     CancelNotificationClear
@@ -29,8 +30,57 @@ Private Sub lstMacro_Change()
     CancelNotificationClear
     CancelPendingConfirmation
     Me.lblDescription.Caption = ""
-    If Me.lstMacro.ListIndex >= 0 Then Me.lblDescription.Caption = Me.lstMacro.List(Me.lstMacro.ListIndex, 2)
+    If Me.lstMacro.ListIndex >= 0 Then
+        Me.lblDescription.Caption = Me.lstMacro.List(Me.lstMacro.ListIndex, 2)
+        ConfigureScopeOptions CStr(Me.lstMacro.List(Me.lstMacro.ListIndex, 3))
+    Else
+        ConfigureScopeOptions vbNullString
+    End If
     ShowResult "Aguardando execucao.", "waiting"
+End Sub
+
+Private Sub ConfigureScopeOptions(ByVal scopeSpec As String)
+    configuringScope = True
+
+    Me.lblScope.Enabled = (Len(scopeSpec) > 0)
+    Me.optScopeSelection.Enabled = modMacroLauncher.CommandSupportsScope(scopeSpec, COMMAND_SCOPE_SELECTION)
+    Me.optScopeSlide.Enabled = modMacroLauncher.CommandSupportsScope(scopeSpec, COMMAND_SCOPE_SLIDE)
+    Me.optScopePresentation.Enabled = modMacroLauncher.CommandSupportsScope(scopeSpec, COMMAND_SCOPE_PRESENTATION)
+
+    Me.optScopeSelection.Value = False
+    Me.optScopePresentation.Value = False
+    Me.optScopeSlide.Value = True
+
+    configuringScope = False
+End Sub
+
+Private Function SelectedScope() As String
+    If Me.optScopeSelection.Value Then
+        SelectedScope = COMMAND_SCOPE_SELECTION
+    ElseIf Me.optScopePresentation.Value Then
+        SelectedScope = COMMAND_SCOPE_PRESENTATION
+    Else
+        SelectedScope = COMMAND_SCOPE_SLIDE
+    End If
+End Function
+
+Private Sub HandleScopeChange()
+    If configuringScope Then Exit Sub
+    CancelNotificationClear
+    CancelPendingConfirmation
+    ShowResult "Aguardando execucao.", "waiting"
+End Sub
+
+Private Sub optScopeSelection_Click()
+    HandleScopeChange
+End Sub
+
+Private Sub optScopeSlide_Click()
+    HandleScopeChange
+End Sub
+
+Private Sub optScopePresentation_Click()
+    HandleScopeChange
 End Sub
 
 Private Sub lstMacro_DblClick(ByVal Cancel As MSForms.ReturnBoolean)
@@ -46,7 +96,7 @@ Private Sub cmdRun_Click()
     Me.cmdClose.Enabled = False
     ShowResult "Executando...", "running"
     Me.Repaint
-    resultMessage = modMacroLauncher.MacroLauncherRunSelected(Me.lstMacro)
+    resultMessage = modMacroLauncher.MacroLauncherRunSelected(Me.lstMacro, SelectedScope())
     ShowResult resultMessage, "complete"
 Done:
     Me.cmdRun.Enabled = True
@@ -62,7 +112,7 @@ End Sub
 Private Sub cmdClose_Click()
     CancelNotificationClear
     CancelPendingConfirmation
-    Me.Hide
+    modMacroLauncher.CloseMacroLauncher
 End Sub
 
 Private Sub UserForm_QueryClose(Cancel As Integer, CloseMode As Integer)
@@ -71,7 +121,7 @@ Private Sub UserForm_QueryClose(Cancel As Integer, CloseMode As Integer)
         If Me.cmdRun.Enabled Then
             CancelNotificationClear
             CancelPendingConfirmation
-            Me.Hide
+            modMacroLauncher.CloseMacroLauncher
         End If
     End If
 End Sub
@@ -90,8 +140,11 @@ End Sub
 Private Sub ConfigureKeyboard()
     Me.cboCategory.TabIndex = 0
     Me.lstMacro.TabIndex = 1
-    Me.cmdRun.TabIndex = 2
-    Me.cmdClose.TabIndex = 3
+    Me.optScopeSelection.TabIndex = 2
+    Me.optScopeSlide.TabIndex = 3
+    Me.optScopePresentation.TabIndex = 4
+    Me.cmdRun.TabIndex = 5
+    Me.cmdClose.TabIndex = 6
 
     Me.lblCategory.Accelerator = "C"
     Me.lblMacro.Accelerator = "M"
@@ -113,6 +166,18 @@ Private Sub cboCategory_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Sh
 End Sub
 
 Private Sub lstMacro_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
+    If HandleKeyboardShortcut(CLng(KeyCode), Shift) Then KeyCode = 0
+End Sub
+
+Private Sub optScopeSelection_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
+    If HandleKeyboardShortcut(CLng(KeyCode), Shift) Then KeyCode = 0
+End Sub
+
+Private Sub optScopeSlide_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
+    If HandleKeyboardShortcut(CLng(KeyCode), Shift) Then KeyCode = 0
+End Sub
+
+Private Sub optScopePresentation_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
     If HandleKeyboardShortcut(CLng(KeyCode), Shift) Then KeyCode = 0
 End Sub
 
@@ -167,6 +232,7 @@ Private Sub ApplyVisualStyle()
 
     StyleSectionLabel Me.lblDescriptionTitle
     StyleSectionLabel Me.lblResultTitle
+    StyleSectionLabel Me.lblScope
 
     Me.lblDescription.ForeColor = RGB(71, 85, 105)
     Me.lblDescription.WordWrap = True

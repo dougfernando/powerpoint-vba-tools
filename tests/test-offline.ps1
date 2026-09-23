@@ -33,8 +33,30 @@ foreach ($file in Get-ChildItem (Join-Path $repo 'scripts'),$PSScriptRoot -Filte
     Assert-True ($errors.Count -eq 0) "Syntax: $($file.Name): $errors"
 }
 $model = Get-SourceModel (Join-Path $repo 'src')
-Assert-True ($model.Catalog.Count -eq 15) '15 shipped commands'
+Assert-True ($model.Catalog.Count -eq 13) '13 shipped commands'
+Assert-True (@($model.Catalog | Where-Object category -eq 'Excel').Count -eq 0) 'Excel category removed'
 Assert-True (@($model.Catalog | Where-Object id -eq 'Cmd_Text_RemoveManualLineBreaks').Count -eq 1) 'Manual line-break command in catalog'
+$lineBreakProcedure = [regex]::Match($model.Modules['modCommands_Text'], '(?ms)^Public Sub Cmd_Text_RemoveManualLineBreaks\(\).*?^End Sub').Value
+Assert-True ($lineBreakProcedure -match 'TryGetSelectedShapes\(sr\)') 'Manual line-break command accepts a shape range'
+Assert-True ($lineBreakProcedure -match 'For Each shp In sr') 'Manual line-break command processes every selected shape'
+Assert-True ($lineBreakProcedure -notmatch 'TryGetSingleSelectedShape') 'Manual line-break command is not limited to one shape'
+$expectedScopes = @{
+    Cmd_Text_DisableAutofit = 'selection,slide,presentation'
+    Cmd_Shape_DeleteByFillColor = 'slide,presentation'
+    Cmd_Shape_DeleteSimilar = 'slide,presentation'
+    Cmd_Shape_RemoveOutsideSlide = 'selection,slide,presentation'
+    Cmd_QA_MarkNonAllowedFonts = 'selection,slide,presentation'
+    Cmd_QA_ClearMarkers = 'selection,slide,presentation'
+    Cmd_QA_CheckForbiddenClientNames = 'selection,slide,presentation'
+}
+foreach ($entry in $model.Catalog) {
+    $actualScopes = if ($entry.PSObject.Properties['scopes']) { @($entry.scopes) -join ',' } else { '' }
+    $expectedScope = if ($expectedScopes.ContainsKey($entry.id)) { $expectedScopes[$entry.id] } else { '' }
+    Assert-True ($actualScopes -eq $expectedScope) "Command scopes: $($entry.id)"
+}
+Assert-True ($model.Modules.ContainsKey('modCommandScope')) 'Command scope runtime included in source model'
+Assert-True ($model.Modules['modCommandScope'] -match 'CurrentCommandScope[\s\S]*ResetCommandScope') 'Command scope defaults safely to slide'
+Assert-True ($model.Modules['modSelection'] -match 'TryGetShapesForScope[\s\S]*COMMAND_SCOPE_SELECTION[\s\S]*COMMAND_SCOPE_SLIDE[\s\S]*COMMAND_SCOPE_PRESENTATION') 'Scoped shape collection supports all scopes'
 Assert-True ($model.Modules.ContainsKey('modNotifications')) 'Notification channel included in source model'
 Assert-True ($model.Modules['modNotifications'] -match 'Public Sub Notify\(ByVal message As String\)') 'Notification publisher is available'
 Assert-True ($model.Modules['modNotifications'] -match 'Public Function ConsumeNotification\(\) As String') 'Notification consumer is available'
@@ -115,12 +137,20 @@ $height = $component.Properties.Item('Height').Value
 $startUp = $component.Properties.Item('StartUpPosition').Value
 Assert-True ($caption -is [string] -and $caption -eq 'DFS Tools') 'Form caption through VBIDE is String'
 Assert-True ($width -is [single] -and $width -eq 440) 'Form width through VBIDE is Single'
-Assert-True ($height -is [single] -and $height -eq 418) 'Form height through VBIDE is Single'
+Assert-True ($height -is [single] -and $height -eq 466) 'Form height through VBIDE is Single'
 Assert-True ($model.FormCode -match 'cmdRun\.Default\s*=\s*True') 'Enter runs selected command'
 Assert-True ($model.FormCode -match 'cmdClose\.Cancel\s*=\s*True') 'Escape closes launcher'
 Assert-True ($model.FormCode -match 'cboCategory\.TabIndex\s*=\s*0') 'Keyboard navigation starts at category'
 Assert-True ($model.FormCode -match 'lstMacro\.TabIndex\s*=\s*1') 'Keyboard navigation continues to command'
 Assert-True ($model.FormCode -match 'UserForm_Activate[\s\S]*lstMacro\.SetFocus') 'Initial focus moves to macro list'
+Assert-True ($model.FormCode -match 'ConfigureScopeOptions[\s\S]*optScopeSlide\.Value\s*=\s*True') 'Changing command defaults scope to slide'
+Assert-True ($model.FormCode -match 'HandleScopeChange[\s\S]*CancelPendingConfirmation') 'Changing scope cancels pending confirmation'
+Assert-True ($model.FormCode -match 'MacroLauncherRunSelected\(Me\.lstMacro, SelectedScope\(\)\)') 'Launcher passes selected scope to dispatch'
+Assert-True ($model.Modules['modMacroLauncher'] -match 'CommandSupportsScope') 'Launcher validates selected scope'
+Assert-True ($model.FormCode -notmatch '\bMe\.Hide\b') 'Closing never leaves a hidden launcher instance'
+Assert-True ($model.FormCode -match 'cmdClose_Click\(\)[\s\S]*modMacroLauncher\.CloseMacroLauncher') 'Close button unloads launcher'
+Assert-True ($model.Modules['modMacroLauncher'] -match 'Unload launcher[\s\S]*Set launcher = Nothing') 'Launcher close releases the form instance'
+Assert-True ($model.Modules['modMacroLauncher'] -match 'RetryWithFreshInstance:[\s\S]*CloseMacroLauncher[\s\S]*ShowLauncherInstance') 'Launcher retries once with a fresh instance'
 Assert-True ($model.FormCode -match 'Case vbKeyC[\s\S]*cboCategory\.SetFocus') 'Alt+C focuses category explicitly'
 Assert-True ($model.FormCode -match 'Case vbKeyM[\s\S]*lstMacro\.SetFocus') 'Alt+M focuses macro list explicitly'
 Assert-True ($model.FormCode -match 'ScheduleNotificationClear') 'Launcher schedules result cleanup'
@@ -139,6 +169,7 @@ foreach ($definition in $model.UI.controls) {
 }
 $generated = New-CatalogCode $model.Catalog
 Assert-True ($generated -notmatch 'Application.Run|VBProject|ThisPresentation') 'Direct dispatch only'
+Assert-True ($generated -match 'selection,slide,presentation') 'Generated catalog includes scope metadata'
 foreach ($entry in $model.Catalog) {
     Assert-True ($generated.Contains($entry.module + '.' + $entry.id)) "Dispatch target $($entry.id)"
 }
@@ -156,6 +187,18 @@ $fixture = New-Fixture
 $entries[0].module = 'modMissing'
 Write-TestText (Join-Path $fixture 'commands.json') (ConvertTo-Json -InputObject $entries -Depth 5)
 Assert-Throws { Get-SourceModel $fixture } 'Modulo inexistente'
+$fixture = New-Fixture
+$entries = Get-Content (Join-Path $fixture 'commands.json') -Raw | ConvertFrom-Json
+$entries = @($entries)
+$entries[0].scopes = @('selection','invalid','slide')
+Write-TestText (Join-Path $fixture 'commands.json') (ConvertTo-Json -InputObject @($entries) -Depth 5)
+Assert-Throws { Get-SourceModel $fixture } 'Escopo invalido'
+$fixture = New-Fixture
+$entries = Get-Content (Join-Path $fixture 'commands.json') -Raw | ConvertFrom-Json
+$entries = @($entries)
+$entries[0].scopes = @('selection','presentation')
+Write-TestText (Join-Path $fixture 'commands.json') (ConvertTo-Json -InputObject @($entries) -Depth 5)
+Assert-Throws { Get-SourceModel $fixture } 'deve aceitar slide'
 $fixture = New-Fixture
 $path = Join-Path $fixture 'modCommands_Text.bas'
 Write-TestText $path ((Get-Content $path -Raw) -replace 'Public Sub Cmd_Text_Swap\(\)', 'Public Sub Cmd_Text_Swap(ByVal x As Long)')

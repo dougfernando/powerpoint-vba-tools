@@ -5,25 +5,25 @@ Option Explicit
 Public Sub Cmd_Text_DisableAutofit()
     On Error GoTo ErrorHandler
 
-    Dim pres As Presentation
-    If Not TryGetTargetPresentation(pres) Then
-        Notify "Operacao nao executada: nenhuma apresentacao ativa."
+    Dim scopeName As String
+    scopeName = CurrentCommandScope()
+
+    Dim targetShapes As Collection
+    If Not TryGetShapesForScope(scopeName, targetShapes) Then
+        Notify "Operacao nao executada: o escopo " & CommandScopeLabel(scopeName) & " nao esta disponivel."
         Exit Sub
     End If
 
-    Dim sld As Slide
     Dim shp As Shape
     Dim changedCount As Long
 
     Application.StartNewUndoEntry
 
-    For Each sld In pres.Slides
-        For Each shp In sld.Shapes
-            SetShapeDoNotAutofit shp, changedCount
-        Next shp
-    Next sld
+    For Each shp In targetShapes
+        SetShapeDoNotAutofit shp, changedCount
+    Next shp
 
-    Notify "Ajuste automatico desativado em " & changedCount & " shapes de " & pres.Slides.Count & " slides."
+    Notify "Ajuste automatico desativado em " & changedCount & " shapes no escopo " & CommandScopeLabel(scopeName) & "."
     Exit Sub
 
 ErrorHandler:
@@ -120,41 +120,40 @@ End Sub
 Public Sub Cmd_Text_RemoveManualLineBreaks()
     On Error GoTo ErrorHandler
 
+    Dim sr As ShapeRange
+    If Not TryGetSelectedShapes(sr) Then
+        Notify "Operacao nao executada: selecione um ou mais shapes."
+        Exit Sub
+    End If
+
     Dim shp As Shape
-    If Not TryGetSingleSelectedShape(shp) Then
-        Notify "Operacao nao executada: selecione exatamente um shape."
-        Exit Sub
-    End If
-
-    If shp.HasTextFrame = msoFalse Then
-        Notify "Operacao nao executada: o shape selecionado nao possui texto."
-        Exit Sub
-    End If
-
-    If shp.TextFrame.HasText = msoFalse Then
-        Notify "Operacao nao executada: o shape selecionado nao possui texto."
-        Exit Sub
-    End If
-
     Dim originalText As String
     Dim updatedText As String
-    originalText = shp.TextFrame.TextRange.Text
-    updatedText = originalText
+    Dim changedCount As Long
 
-    updatedText = Replace(updatedText, vbCrLf, " ")
-    updatedText = Replace(updatedText, vbCr, " ")
-    updatedText = Replace(updatedText, vbLf, " ")
-    updatedText = Replace(updatedText, Chr$(11), " ")
+    For Each shp In sr
+        If ShapeHasText(shp) Then
+            originalText = shp.TextFrame.TextRange.Text
+            updatedText = originalText
 
-    If updatedText = originalText Then
-        Notify "Nenhuma quebra manual foi encontrada no shape selecionado."
-        Exit Sub
+            updatedText = Replace(updatedText, vbCrLf, " ")
+            updatedText = Replace(updatedText, vbCr, " ")
+            updatedText = Replace(updatedText, vbLf, " ")
+            updatedText = Replace(updatedText, Chr$(11), " ")
+
+            If updatedText <> originalText Then
+                If changedCount = 0 Then Application.StartNewUndoEntry
+                shp.TextFrame.TextRange.Text = updatedText
+                changedCount = changedCount + 1
+            End If
+        End If
+    Next shp
+
+    If changedCount = 0 Then
+        Notify "Nenhuma quebra manual foi encontrada nos shapes selecionados."
+    Else
+        Notify "Quebras manuais removidas de " & changedCount & " shapes selecionados."
     End If
-
-    Application.StartNewUndoEntry
-    shp.TextFrame.TextRange.Text = updatedText
-
-    Notify "Quebras manuais removidas do shape selecionado."
     Exit Sub
 
 ErrorHandler:

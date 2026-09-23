@@ -35,3 +35,13 @@ End Function
 Public Function SlideHeightPoints(ByVal pres As Presentation) As Single
     SlideHeightPoints = pres.PageSetup.SlideHeight
 End Function
+
+Public Function TryGetShapeSlide(ByVal shp As Shape, ByRef sld As Slide) As Boolean
+    On Error GoTo Fail
+    Set sld = shp.Parent.Parent
+    TryGetShapeSlide = Not sld Is Nothing
+    Exit Function
+Fail:
+    Set sld = Nothing
+    TryGetShapeSlide = False
+End Function

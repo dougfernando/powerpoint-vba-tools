@@ -1,6 +1,6 @@
 # DFS Tools para PowerPoint
 
-Add-in VBA (`.ppam`) para executar ferramentas de texto, formas, tabelas, QA e integração com Excel a partir da aba **DFS Tools** do PowerPoint.
+Add-in VBA (`.ppam`) para executar ferramentas de texto, formas, tabelas e QA a partir da aba **DFS Tools** do PowerPoint.
 
 O projeto mantém as fontes VBA, o catálogo de comandos, a interface do launcher e o Ribbon fora do arquivo binário. O PPAM é reconstruído por scripts PowerShell, tornando as mudanças revisáveis e reproduzíveis.
 
@@ -8,9 +8,13 @@ O projeto mantém as fontes VBA, o catálogo de comandos, a interface do launche
 
 Use **DFS Tools > Abrir macros**. O formulário é modeless: ele pode permanecer aberto enquanto você troca de slide, seleção ou apresentação.
 
+Ao fechar, a instância do formulário é descarregada completamente. Uma nova instância é criada na próxima abertura para acompanhar a janela ativa do PowerPoint e evitar que o launcher permaneça oculto ou atrás de outra apresentação.
+
 - A lista mostra várias macros no formato `Nome da macro (Categoria)`.
 - O foco inicial fica na lista de macros.
 - Digitar o começo do nome seleciona uma macro na lista.
+- Macros compatíveis exibem os escopos **Seleção**, **Slide** e **Apresentação**; **Slide** é restaurado ao trocar de macro.
+- O seletor fica desativado quando a macro tem escopo fixo. Nas exclusões por cor e semelhança, a seleção continua sendo a referência e os alvos podem ser limitados ao slide ou à apresentação.
 - `Enter` executa a macro selecionada e `Esc` fecha o launcher.
 - `Alt+C`, `Alt+M`, `Alt+E` e `Alt+F` acessam categoria, macros, Executar e Fechar.
 - Duplo clique também executa uma macro.
@@ -19,13 +23,14 @@ Use **DFS Tools > Abrir macros**. O formulário é modeless: ele pode permanecer
 
 Operações destrutivas usam confirmação não modal. A primeira execução apresenta o pedido na área **Resultado**; execute o mesmo comando novamente dentro de 1 segundo para confirmar.
 
-O catálogo atual contém 15 comandos nas categorias Texto, Formas, Tabelas, QA e Excel. A fonte oficial do catálogo é [src/commands.json](src/commands.json).
+No seletor de escopo, **Seleção** considera os shapes selecionados, **Slide** considera todos os shapes do slide ativo e **Apresentação** considera todos os slides da apresentação ativa.
+
+O catálogo atual contém 13 comandos nas categorias Texto, Formas, Tabelas e QA. A fonte oficial do catálogo é [src/commands.json](src/commands.json).
 
 ## Requisitos
 
 - Windows com PowerPoint desktop.
 - Windows PowerShell 5.1.
-- Excel desktop apenas para os comandos de exportação e importação de textos.
 - Permissão temporária para **Confiar no acesso ao modelo de objeto do projeto VBA** durante build, importação, exportação ou recarga de módulos.
 
 Essa opção fica em **Arquivo > Opções > Central de Confiabilidade > Configurações da Central de Confiabilidade > Configurações de Macro**. Políticas corporativas podem bloqueá-la.
@@ -36,12 +41,9 @@ O uso normal do add-in não exige acesso ao projeto VBA. Os scripts não habilit
 
 Salve o trabalho aberto e feche todas as instâncias do PowerPoint. Na raiz do projeto, execute:
 
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-ppam.ps1
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-addin.ps1
+```bat
+.\build.bat
 ```
-
-Abra o PowerPoint e acesse **DFS Tools > Abrir macros**.
 
 O artefato principal é gerado em:
 
@@ -49,13 +51,15 @@ O artefato principal é gerado em:
 build\DouglasPowerPointTools.ppam
 ```
 
-O instalador copia o add-in para:
+Instale o add-in manualmente pelo PowerPoint:
 
-```text
-%APPDATA%\Microsoft\AddIns\DouglasPowerPointTools\DouglasPowerPointTools.ppam
-```
+1. abra o PowerPoint;
+2. acesse **Arquivo > Opções > Suplementos**;
+3. em **Gerenciar**, selecione **Suplementos do PowerPoint** e clique em **Ir**;
+4. clique em **Adicionar novo** e selecione `build\DouglasPowerPointTools.ppam`;
+5. confirme que o suplemento está marcado na lista.
 
-Se houver uma instalação antiga registrada em outro caminho, remova-a em **Arquivo > Opções > Suplementos > Gerenciar: Suplementos do PowerPoint > Ir** antes de instalar novamente.
+Depois, acesse **DFS Tools > Abrir macros**. Se houver uma instalação antiga registrada em outro caminho, remova-a nessa mesma janela antes de adicionar a nova versão.
 
 ## Desenvolvimento e recarga rápida
 
@@ -93,7 +97,7 @@ A recarga rápida serve para alterações em módulos `.bas` gerenciados. As mud
 | `src/ui/frmMacroLauncher.code` | Eventos, teclado e aparência do UserForm |
 | `resources/customUI.xml` | Aba DFS Tools no Ribbon |
 | `scripts/lib/` | Modelo de fontes, empacotamento e utilitários COM/Open XML |
-| `scripts/` | Build, instalação, desinstalação e sincronização com o VBE |
+| `scripts/` | Build, empacotamento e sincronização com o VBE |
 | `tests/test-offline.ps1` | Testes estruturais sem abrir o Office |
 | `docs/VALIDATION.md` | Roteiro de validação manual no PowerPoint |
 | `build/` | Artefatos, staging, backups e logs; não versionar |
@@ -110,6 +114,8 @@ Cada comando do launcher deve:
 4. publicar sucesso, validação, cancelamento ou erro com `Notify`;
 5. não usar `MsgBox`;
 6. usar `ConfirmThroughStatus` antes de uma exclusão que exija confirmação.
+
+Comandos que aceitam escolha de escopo declaram `scopes` no catálogo usando `selection`, `slide` e/ou `presentation`. Todo comando com escopo deve aceitar `slide`, que é o padrão seguro do launcher e de chamadas diretas.
 
 Exemplo mínimo:
 
@@ -143,6 +149,7 @@ Esses testes verificam, entre outros contratos:
 - catálogo e assinaturas `Cmd_*`;
 - ausência de `MsgBox` no runtime;
 - controles e dimensões do launcher;
+- metadados, preseleção e validação dos escopos de execução;
 - atalhos de teclado e foco inicial;
 - timer de resultado;
 - geração do dispatcher direto;
@@ -153,7 +160,9 @@ Os testes offline não substituem a compilação VBA e a verificação visual no
 
 ## Como o build funciona
 
-O script [scripts/build-ppam.ps1](scripts/build-ppam.ps1):
+> A construção completa do PPAM é uma etapa manual. Agentes e automações devem limitar-se aos testes offline e ao modo `-ValidateOnly`; o usuário executa o build completo com o PowerPoint fechado.
+
+Execute `build.bat` na raiz do projeto para construir o PPAM. Ele chama [scripts/build-ppam.ps1](scripts/build-ppam.ps1), que:
 
 1. valida fontes, catálogo e definição da interface;
 2. abre uma instância isolada do PowerPoint;
@@ -166,13 +175,7 @@ O script [scripts/build-ppam.ps1](scripts/build-ppam.ps1):
 9. valida o pacote e, por padrão, executa o health check;
 10. publica atomicamente o novo arquivo, mantendo backup do anterior.
 
-Se somente a validação COM de carregamento falhar, é possível ignorar o health check:
-
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-ppam.ps1 -SkipRuntimeValidation
-```
-
-Isso não ignora a validação estrutural do pacote. Instale e teste manualmente o launcher depois.
+O `build.bat` ignora somente o health check COM de carregamento; ele não ignora a validação estrutural do pacote. Instale o PPAM pela interface do PowerPoint e teste o launcher manualmente depois do build.
 
 Os parâmetros `SourceFolder`, `OutputFolder` e `OutputFile` também estão disponíveis. `OutputFile` deve ser somente um nome terminado em `.ppam`, sem caminho.
 
@@ -189,23 +192,13 @@ A importação cria uma cópia de segurança antes de substituir módulos e não
 
 As fontes do repositório usam UTF-8. Antes de importar no VBIDE, os scripts convertem os módulos para a página ANSI local e recusam caracteres que não possam ser representados.
 
-## Desinstalação e recuperação
+## Remoção e recuperação
 
-Para desinstalar:
-
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\uninstall-addin.ps1
-```
-
-O registro é removido e o arquivo instalado é renomeado para `.uninstalled`, permitindo recuperação. Backups não são apagados automaticamente.
+Para remover o add-in, abra **Arquivo > Opções > Suplementos > Gerenciar: Suplementos do PowerPoint > Ir**, selecione o suplemento e clique em **Remover**. A instalação e a remoção devem ser feitas manualmente pelo PowerPoint.
 
 Em caso de falha de build, consulte a pasta `build\staging-*` indicada no terminal e seu `build-error.log`. Se o destino estiver bloqueado, feche o PowerPoint e confirme que não existe uma instância `POWERPNT` em segundo plano. O script não encerra sessões do usuário automaticamente.
 
-Para instalar manualmente um backup ou outro PPAM:
-
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-addin.ps1 -PpamPath C:\Caminho\DouglasPowerPointTools.ppam
-```
+Para instalar um backup ou outro PPAM, use **Adicionar novo** na mesma janela de suplementos e selecione o arquivo desejado.
 
 ## Referências
 

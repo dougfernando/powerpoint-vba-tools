@@ -36,26 +36,30 @@ End Sub
 Public Sub Cmd_QA_MarkNonAllowedFonts()
     On Error GoTo ErrorHandler
 
-    Dim pres As Presentation
-    If Not TryGetTargetPresentation(pres) Then
-        Notify "Operacao nao executada: nenhuma apresentacao ativa."
+    Dim scopeName As String
+    scopeName = CurrentCommandScope()
+
+    Dim targetShapes As Collection
+    If Not TryGetShapesForScope(scopeName, targetShapes) Then
+        Notify "Operacao nao executada: o escopo " & CommandScopeLabel(scopeName) & " nao esta disponivel."
         Exit Sub
     End If
 
     Application.StartNewUndoEntry
 
     Dim markedCount As Long
-    Dim sld As Slide, shp As Shape
-    For Each sld In pres.Slides
-        For Each shp In sld.Shapes
-            If ShapeUsesNonAllowedFont(shp) Then
+    Dim sld As Slide
+    Dim shp As Shape
+    For Each shp In targetShapes
+        If ShapeUsesNonAllowedFont(shp) Then
+            If TryGetShapeSlide(shp, sld) Then
                 AddQAMarker sld, shp, QA_MARKER_FONT
                 markedCount = markedCount + 1
             End If
-        Next shp
-    Next sld
+        End If
+    Next shp
 
-    Notify markedCount & " shapes com fontes nao permitidas foram marcados."
+    Notify markedCount & " shapes com fontes nao permitidas foram marcados no escopo " & CommandScopeLabel(scopeName) & "."
     Exit Sub
 
 ErrorHandler:
@@ -102,28 +106,28 @@ End Sub
 Public Sub Cmd_QA_ClearMarkers()
     On Error GoTo ErrorHandler
 
-    Dim pres As Presentation
-    If Not TryGetTargetPresentation(pres) Then
-        Notify "Operacao nao executada: nenhuma apresentacao ativa."
+    Dim scopeName As String
+    scopeName = CurrentCommandScope()
+
+    Dim targetShapes As Collection
+    If Not TryGetShapesForScope(scopeName, targetShapes) Then
+        Notify "Operacao nao executada: o escopo " & CommandScopeLabel(scopeName) & " nao esta disponivel."
         Exit Sub
     End If
 
     Application.StartNewUndoEntry
 
-    Dim sld As Slide, shp As Shape
-    Dim i As Long, deletedCount As Long
+    Dim shp As Shape
+    Dim deletedCount As Long
 
-    For Each sld In pres.Slides
-        For i = sld.Shapes.Count To 1 Step -1
-            Set shp = sld.Shapes(i)
-            If shp.Tags(QA_MARKER_TAG_NAME) <> "" Then
-                shp.Delete
-                deletedCount = deletedCount + 1
-            End If
-        Next i
-    Next sld
+    For Each shp In targetShapes
+        If shp.Tags(QA_MARKER_TAG_NAME) <> "" Then
+            shp.Delete
+            deletedCount = deletedCount + 1
+        End If
+    Next shp
 
-    Notify deletedCount & " marcadores de QA foram removidos."
+    Notify deletedCount & " marcadores de QA foram removidos no escopo " & CommandScopeLabel(scopeName) & "."
     Exit Sub
 
 ErrorHandler:
@@ -133,9 +137,12 @@ End Sub
 Public Sub Cmd_QA_CheckForbiddenClientNames()
     On Error GoTo ErrorHandler
 
-    Dim pres As Presentation
-    If Not TryGetTargetPresentation(pres) Then
-        Notify "Operacao nao executada: nenhuma apresentacao ativa."
+    Dim scopeName As String
+    scopeName = CurrentCommandScope()
+
+    Dim targetShapes As Collection
+    If Not TryGetShapesForScope(scopeName, targetShapes) Then
+        Notify "Operacao nao executada: o escopo " & CommandScopeLabel(scopeName) & " nao esta disponivel."
         Exit Sub
     End If
 
@@ -143,12 +150,12 @@ Public Sub Cmd_QA_CheckForbiddenClientNames()
     exceptionsInput = InputBox("Exceptions separated by semicolons (;):", "Forbidden Client Names")
 
     Dim report As String
-    report = BuildForbiddenClientReport(pres, exceptionsInput)
+    report = BuildForbiddenClientReport(targetShapes, exceptionsInput)
 
     If Len(report) = 0 Then
-        Notify "Verificacao concluida: nenhum nome proibido foi encontrado."
+        Notify "Nenhum nome proibido foi encontrado no escopo " & CommandScopeLabel(scopeName) & "."
     Else
-        Notify "Ocorrencias encontradas: " & Replace(report, vbCrLf, " | ")
+        Notify "Ocorrencias no escopo " & CommandScopeLabel(scopeName) & ": " & Replace(report, vbCrLf, " | ")
     End If
     Exit Sub
 
@@ -156,32 +163,33 @@ ErrorHandler:
     Notify "Falha ao verificar nomes proibidos: " & Err.Description
 End Sub
 
-Private Function BuildForbiddenClientReport(ByVal pres As Presentation, ByVal exceptionsInput As String) As String
+Private Function BuildForbiddenClientReport(ByVal targetShapes As Collection, ByVal exceptionsInput As String) As String
     Dim terms As Variant
     terms = ForbiddenClientTerms()
 
     Dim exceptions As Variant
     exceptions = Split(exceptionsInput, ";")
 
-    Dim sld As Slide, shp As Shape
+    Dim sld As Slide
+    Dim shp As Shape
     Dim shapeText As String
     Dim i As Long
     Dim result As String
 
-    For Each sld In pres.Slides
-        For Each shp In sld.Shapes
-            If ShapeHasText(shp) Then
-                shapeText = shp.TextFrame2.TextRange.Text
-                For i = LBound(terms) To UBound(terms)
-                    If Not IsExceptionTerm(CStr(terms(i)), exceptions) Then
-                        If ContainsForbiddenTerm(shapeText, CStr(terms(i))) Then
+    For Each shp In targetShapes
+        If ShapeHasText(shp) Then
+            shapeText = shp.TextFrame2.TextRange.Text
+            For i = LBound(terms) To UBound(terms)
+                If Not IsExceptionTerm(CStr(terms(i)), exceptions) Then
+                    If ContainsForbiddenTerm(shapeText, CStr(terms(i))) Then
+                        If TryGetShapeSlide(shp, sld) Then
                             result = result & "Slide " & sld.SlideIndex & ": " & CStr(terms(i)) & vbCrLf
                         End If
                     End If
-                Next i
-            End If
-        Next shp
-    Next sld
+                End If
+            Next i
+        End If
+    Next shp
 
     BuildForbiddenClientReport = result
 End Function

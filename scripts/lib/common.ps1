@@ -47,6 +47,17 @@ function Get-SourceModel([string]$SourceFolder) {
         if ($modules[$entry.module] -notmatch $pattern -or $modules[$entry.module] -match '(?im)^\s*Option Private Module') {
             throw "Comando deve ser Public Sub sem parametros: $($entry.id)"
         }
+        if ($entry.PSObject.Properties['scopes']) {
+            $scopes = @($entry.scopes)
+            if (!$scopes.Count) { throw "Lista de escopos vazia: $($entry.id)" }
+            $scopeKeys = @{}
+            foreach ($scope in $scopes) {
+                if ($scope -notin 'selection','slide','presentation') { throw "Escopo invalido em $($entry.id): $scope" }
+                if ($scopeKeys.ContainsKey($scope)) { throw "Escopo duplicado em $($entry.id): $scope" }
+                $scopeKeys[$scope] = $true
+            }
+            if (!$scopeKeys.ContainsKey('slide')) { throw "Comando com escopo deve aceitar slide: $($entry.id)" }
+        }
     }
     foreach ($code in $modules.Values) {
         foreach ($match in [regex]::Matches($code, '(?im)^\s*Public Sub (Cmd_\w+)\s*\(')) {
@@ -58,10 +69,10 @@ function Get-SourceModel([string]$SourceFolder) {
     if ($ui.name -ne 'frmMacroLauncher') { throw 'Nome de formulario invalido.' }
     $controls = @{}
     foreach ($control in $ui.controls) {
-        if ($control.type -notin 'Label','ComboBox','ListBox','CommandButton' -or $controls.ContainsKey($control.name)) { throw 'Controle invalido ou duplicado.' }
+        if ($control.type -notin 'Label','ComboBox','ListBox','OptionButton','CommandButton' -or $controls.ContainsKey($control.name)) { throw 'Controle invalido ou duplicado.' }
         $controls[$control.name] = $true
     }
-    foreach ($required in 'cboCategory','lstMacro','lblDescription','lblResult','cmdRun','cmdClose') {
+    foreach ($required in 'cboCategory','lstMacro','lblScope','optScopeSelection','optScopeSlide','optScopePresentation','lblDescription','lblResult','cmdRun','cmdClose') {
         if (!$controls.ContainsKey($required)) { throw "Controle ausente: $required" }
     }
     [pscustomobject]@{ Root=$root; Files=$files; Modules=$modules; Catalog=$catalog; UI=$ui; FormCode=$formCode }
@@ -77,7 +88,8 @@ function New-CatalogCode($Catalog) {
     $lines.Add('Public Function CommandCatalog() As Collection')
     $lines.Add('    Dim result As New Collection')
     foreach ($entry in $Catalog) {
-        $values = @($entry.id,$entry.category,$entry.label,$entry.description) | ForEach-Object { ConvertTo-VbaString $_ }
+        $scopeSpec = if ($entry.PSObject.Properties['scopes']) { @($entry.scopes) -join ',' } else { '' }
+        $values = @($entry.id,$entry.category,$entry.label,$entry.description,$scopeSpec) | ForEach-Object { ConvertTo-VbaString $_ }
         $lines.Add('    result.Add Array(' + ($values -join ', ') + ')')
     }
     $lines.Add('    Set CommandCatalog = result')

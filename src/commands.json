@@ -4,7 +4,8 @@
     "module": "modCommands_Text",
     "category": "Texto",
     "label": "Desativar ajuste automatico",
-    "description": "Desativa o ajuste automatico de texto em toda a apresentacao."
+    "description": "Desativa o ajuste automatico de texto no escopo escolhido.",
+    "scopes": ["selection", "slide", "presentation"]
   },
   {
     "id": "Cmd_Text_CopyIntoFilledShape",
@@ -32,28 +33,31 @@
     "module": "modCommands_Text",
     "category": "Texto",
     "label": "Remover quebras manuais",
-    "description": "Substitui por espacos as quebras de linha do unico shape selecionado."
+    "description": "Substitui por espacos as quebras de linha dos shapes selecionados."
   },
   {
     "id": "Cmd_Shape_DeleteByFillColor",
     "module": "modCommands_Shapes",
     "category": "Formas",
     "label": "Excluir pela cor",
-    "description": "Exclui formas pela cor de preenchimento da referencia selecionada."
+    "description": "Exclui, no slide ou na apresentacao, formas com a cor da referencia selecionada.",
+    "scopes": ["slide", "presentation"]
   },
   {
     "id": "Cmd_Shape_DeleteSimilar",
     "module": "modCommands_Shapes",
     "category": "Formas",
     "label": "Excluir formas semelhantes",
-    "description": "Exclui formas com posicao e tamanho semelhantes a referencia selecionada."
+    "description": "Exclui, no slide ou na apresentacao, formas semelhantes a referencia selecionada.",
+    "scopes": ["slide", "presentation"]
   },
   {
     "id": "Cmd_Shape_RemoveOutsideSlide",
     "module": "modCommands_Shapes",
     "category": "Formas",
     "label": "Remover formas fora do slide",
-    "description": "Remove formas completamente fora dos limites dos slides."
+    "description": "Remove formas completamente fora dos limites no escopo escolhido.",
+    "scopes": ["selection", "slide", "presentation"]
   },
   {
     "id": "Cmd_Table_ConvertToShapes",
@@ -74,34 +78,23 @@
     "module": "modCommands_QA",
     "category": "QA",
     "label": "Marcar fontes nao permitidas",
-    "description": "Marca textos com fontes fora da lista configurada."
+    "description": "Marca textos com fontes fora da lista configurada no escopo escolhido.",
+    "scopes": ["selection", "slide", "presentation"]
   },
   {
     "id": "Cmd_QA_ClearMarkers",
     "module": "modCommands_QA",
     "category": "QA",
     "label": "Limpar marcadores",
-    "description": "Remove os marcadores de revisao criados pelo add-in."
+    "description": "Remove os marcadores de revisao do add-in no escopo escolhido.",
+    "scopes": ["selection", "slide", "presentation"]
   },
   {
     "id": "Cmd_QA_CheckForbiddenClientNames",
     "module": "modCommands_QA",
     "category": "QA",
     "label": "Verificar nomes de clientes",
-    "description": "Procura termos da lista configurada de clientes e marca ocorrencias."
-  },
-  {
-    "id": "Cmd_Excel_ExportPresentation",
-    "module": "modCommands_Excel",
-    "category": "Excel",
-    "label": "Exportar textos",
-    "description": "Exporta textos para Excel ao lado da apresentacao salva."
-  },
-  {
-    "id": "Cmd_Excel_UpdatePresentation",
-    "module": "modCommands_Excel",
-    "category": "Excel",
-    "label": "Atualizar textos pelo Excel",
-    "description": "Seleciona um arquivo Excel e atualiza textos na apresentacao."
+    "description": "Procura termos da lista de clientes no escopo escolhido e informa ocorrencias.",
+    "scopes": ["selection", "slide", "presentation"]
   }
 ]

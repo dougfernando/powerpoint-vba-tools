@@ -72,6 +72,9 @@ Ao adicionar um comando, atualize também a documentação e os cenários de val
 
 ## PowerShell e build
 
+- A construção completa do PPAM é sempre manual e responsabilidade do usuário.
+- Agentes e automações não devem executar `scripts/build-ppam.ps1` sem `-ValidateOnly`, mesmo quando o PowerPoint estiver fechado.
+- É permitido executar os testes offline e `scripts/build-ppam.ps1 -ValidateOnly` para validar fontes e estrutura.
 - Scripts precisam funcionar no Windows PowerShell 5.1.
 - Evite recursos exclusivos do PowerShell 7.
 - Libere objetos COM explicitamente nos fluxos que criam PowerPoint, apresentações, projetos ou componentes.
@@ -100,13 +103,13 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\test-offline.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-ppam.ps1 -ValidateOnly
 ```
 
-Para alterações em VBA, formulário, catálogo, Ribbon, empacotamento ou instalação, faça também o build completo quando o ambiente tiver PowerPoint disponível e fechado:
+Para alterações em VBA, formulário, catálogo, Ribbon, empacotamento ou instalação, informe ao usuário que ele deve executar manualmente o build completo com o PowerPoint fechado:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-ppam.ps1
 ```
 
-Não declare compilação VBA ou validação visual como concluída apenas com testes offline. Informe claramente o que foi automatizado e o que ainda exige PowerPoint real. Use `docs/VALIDATION.md` como roteiro manual.
+Não execute esse comando em nome do usuário. Não declare compilação VBA ou validação visual como concluída apenas com testes offline. Informe claramente o que foi automatizado e o que ainda exige PowerPoint real. Use `docs/VALIDATION.md` como roteiro manual.
 
 ## Definition of done
 

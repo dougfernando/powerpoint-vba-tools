@@ -41,3 +41,42 @@ Public Function TryGetTwoSelectedShapes(ByRef shp1 As Shape, ByRef shp2 As Shape
     Set shp2 = sr(2)
     TryGetTwoSelectedShapes = True
 End Function
+
+Public Function TryGetShapesForScope(ByVal scopeName As String, ByRef result As Collection) As Boolean
+    On Error GoTo Fail
+
+    Dim shapes As New Collection
+    Dim sr As ShapeRange
+    Dim pres As Presentation
+    Dim sld As Slide
+    Dim shp As Shape
+
+    Select Case scopeName
+        Case COMMAND_SCOPE_SELECTION
+            If Not TryGetSelectedShapes(sr) Then Exit Function
+            For Each shp In sr
+                shapes.Add shp
+            Next shp
+        Case COMMAND_SCOPE_SLIDE
+            If Not TryGetActiveSlide(sld) Then Exit Function
+            For Each shp In sld.Shapes
+                shapes.Add shp
+            Next shp
+        Case COMMAND_SCOPE_PRESENTATION
+            If Not TryGetTargetPresentation(pres) Then Exit Function
+            For Each sld In pres.Slides
+                For Each shp In sld.Shapes
+                    shapes.Add shp
+                Next shp
+            Next sld
+        Case Else
+            Exit Function
+    End Select
+
+    Set result = shapes
+    TryGetShapesForScope = True
+    Exit Function
+Fail:
+    Set result = Nothing
+    TryGetShapesForScope = False
+End Function
