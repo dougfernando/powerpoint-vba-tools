@@ -8,6 +8,8 @@ O projeto mantém as fontes VBA, o catálogo de comandos, a interface do launche
 
 Use **DFS Tools > Abrir macros**. O formulário é modeless: ele pode permanecer aberto enquanto você troca de slide, seleção ou apresentação.
 
+O launcher usa um layout vertical e estreito, inspirado em um painel lateral, com a lista de macros ocupando a maior parte da altura.
+
 Ao fechar, a instância do formulário é descarregada completamente. Uma nova instância é criada na próxima abertura para acompanhar a janela ativa do PowerPoint e evitar que o launcher permaneça oculto ou atrás de outra apresentação.
 
 - A lista mostra várias macros no formato `Nome da macro (Categoria)`.
@@ -25,7 +27,7 @@ Operações destrutivas usam confirmação não modal. A primeira execução apr
 
 No seletor de escopo, **Seleção** considera os shapes selecionados, **Slide** considera todos os shapes do slide ativo e **Apresentação** considera todos os slides da apresentação ativa.
 
-O catálogo atual contém 13 comandos nas categorias Texto, Formas, Tabelas e QA. A fonte oficial do catálogo é [src/commands.json](src/commands.json).
+O catálogo atual contém 14 comandos nas categorias Texto, Formas, Tabelas e QA. A fonte oficial do catálogo é [src/commands.json](src/commands.json).
 
 ## Requisitos
 

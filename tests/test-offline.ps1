@@ -33,15 +33,21 @@ foreach ($file in Get-ChildItem (Join-Path $repo 'scripts'),$PSScriptRoot -Filte
     Assert-True ($errors.Count -eq 0) "Syntax: $($file.Name): $errors"
 }
 $model = Get-SourceModel (Join-Path $repo 'src')
-Assert-True ($model.Catalog.Count -eq 13) '13 shipped commands'
+Assert-True ($model.Catalog.Count -eq 14) '14 shipped commands'
 Assert-True (@($model.Catalog | Where-Object category -eq 'Excel').Count -eq 0) 'Excel category removed'
 Assert-True (@($model.Catalog | Where-Object id -eq 'Cmd_Text_RemoveManualLineBreaks').Count -eq 1) 'Manual line-break command in catalog'
 $lineBreakProcedure = [regex]::Match($model.Modules['modCommands_Text'], '(?ms)^Public Sub Cmd_Text_RemoveManualLineBreaks\(\).*?^End Sub').Value
 Assert-True ($lineBreakProcedure -match 'TryGetSelectedShapes\(sr\)') 'Manual line-break command accepts a shape range'
 Assert-True ($lineBreakProcedure -match 'For Each shp In sr') 'Manual line-break command processes every selected shape'
 Assert-True ($lineBreakProcedure -notmatch 'TryGetSingleSelectedShape') 'Manual line-break command is not limited to one shape'
+$repeatedSpacesProcedure = [regex]::Match($model.Modules['modCommands_Text'], '(?ms)^Public Sub Cmd_Text_RemoveRepeatedSpaces\(\).*?^End Sub').Value
+Assert-True ($repeatedSpacesProcedure -match 'TryGetShapesForScope\(scopeName, targetShapes\)') 'Repeated-space command uses the selected scope'
+Assert-True ($repeatedSpacesProcedure -match 'CollapseRepeatedSpacesInShape') 'Repeated-space command uses the shared text helper'
+Assert-True ($model.Modules['modText'] -match 'CollapseRepeatedSpacesInShape[\s\S]*msoGroup[\s\S]*HasTable') 'Repeated-space helper supports groups and tables'
+Assert-True ($model.Modules['modText'] -match 'Characters\(runStart \+ 1, runLength - 1\)\.Delete') 'Repeated-space helper preserves formatting by deleting only excess characters'
 $expectedScopes = @{
     Cmd_Text_DisableAutofit = 'selection,slide,presentation'
+    Cmd_Text_RemoveRepeatedSpaces = 'selection,slide,presentation'
     Cmd_Shape_DeleteByFillColor = 'slide,presentation'
     Cmd_Shape_DeleteSimilar = 'slide,presentation'
     Cmd_Shape_RemoveOutsideSlide = 'selection,slide,presentation'
@@ -136,20 +142,25 @@ $width = $component.Properties.Item('Width').Value
 $height = $component.Properties.Item('Height').Value
 $startUp = $component.Properties.Item('StartUpPosition').Value
 Assert-True ($caption -is [string] -and $caption -eq 'DFS Tools') 'Form caption through VBIDE is String'
-Assert-True ($width -is [single] -and $width -eq 440) 'Form width through VBIDE is Single'
-Assert-True ($height -is [single] -and $height -eq 466) 'Form height through VBIDE is Single'
+Assert-True ($width -is [single] -and $width -eq 300) 'Form width through VBIDE is Single'
+Assert-True ($height -is [single] -and $height -eq 650) 'Form height through VBIDE is Single'
 Assert-True ($model.FormCode -match 'cmdRun\.Default\s*=\s*True') 'Enter runs selected command'
 Assert-True ($model.FormCode -match 'cmdClose\.Cancel\s*=\s*True') 'Escape closes launcher'
 Assert-True ($model.FormCode -match 'cboCategory\.TabIndex\s*=\s*0') 'Keyboard navigation starts at category'
 Assert-True ($model.FormCode -match 'lstMacro\.TabIndex\s*=\s*1') 'Keyboard navigation continues to command'
 Assert-True ($model.FormCode -match 'UserForm_Activate[\s\S]*lstMacro\.SetFocus') 'Initial focus moves to macro list'
+Assert-True ($model.FormCode -match 'Case "Label", "OptionButton"[\s\S]*BackStyle\s*=\s*0') 'Labels and scope options use transparent backgrounds'
+Assert-True ($model.FormCode -match 'lblTitle[\s\S]*TextAlign\s*=\s*2[\s\S]*lblHint[\s\S]*TextAlign\s*=\s*2') 'Launcher heading is centered'
 Assert-True ($model.FormCode -match 'ConfigureScopeOptions[\s\S]*optScopeSlide\.Value\s*=\s*True') 'Changing command defaults scope to slide'
 Assert-True ($model.FormCode -match 'HandleScopeChange[\s\S]*CancelPendingConfirmation') 'Changing scope cancels pending confirmation'
 Assert-True ($model.FormCode -match 'MacroLauncherRunSelected\(Me\.lstMacro, SelectedScope\(\)\)') 'Launcher passes selected scope to dispatch'
 Assert-True ($model.Modules['modMacroLauncher'] -match 'CommandSupportsScope') 'Launcher validates selected scope'
 Assert-True ($model.FormCode -notmatch '\bMe\.Hide\b') 'Closing never leaves a hidden launcher instance'
 Assert-True ($model.FormCode -match 'cmdClose_Click\(\)[\s\S]*modMacroLauncher\.CloseMacroLauncher') 'Close button unloads launcher'
-Assert-True ($model.Modules['modMacroLauncher'] -match 'Unload launcher[\s\S]*Set launcher = Nothing') 'Launcher close releases the form instance'
+Assert-True ($model.Modules['modMacroLauncher'] -match 'Set target = launcher[\s\S]*Set launcher = Nothing[\s\S]*Unload target') 'Launcher reference is detached before unload'
+Assert-True ($model.Modules['modMacroLauncher'] -match 'Private closingLauncher As Boolean[\s\S]*If closingLauncher Then Exit Sub') 'Launcher close prevents reentry'
+Assert-True ($model.FormCode -match 'UserForm_QueryClose[\s\S]*If Not Me\.cmdRun\.Enabled Then[\s\S]*Cancel = True') 'Window close is blocked only during command execution'
+Assert-True ($model.FormCode -match 'UserForm_Terminate[\s\S]*ReleaseMacroLauncher Me') 'Form termination releases the module reference'
 Assert-True ($model.Modules['modMacroLauncher'] -match 'RetryWithFreshInstance:[\s\S]*CloseMacroLauncher[\s\S]*ShowLauncherInstance') 'Launcher retries once with a fresh instance'
 Assert-True ($model.FormCode -match 'Case vbKeyC[\s\S]*cboCategory\.SetFocus') 'Alt+C focuses category explicitly'
 Assert-True ($model.FormCode -match 'Case vbKeyM[\s\S]*lstMacro\.SetFocus') 'Alt+M focuses macro list explicitly'

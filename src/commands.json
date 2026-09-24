@@ -36,6 +36,14 @@
     "description": "Substitui por espacos as quebras de linha dos shapes selecionados."
   },
   {
+    "id": "Cmd_Text_RemoveRepeatedSpaces",
+    "module": "modCommands_Text",
+    "category": "Texto",
+    "label": "Remover espacos repetidos",
+    "description": "Reduz espacos duplos ou triplos entre palavras no escopo escolhido.",
+    "scopes": ["selection", "slide", "presentation"]
+  },
+  {
     "id": "Cmd_Shape_DeleteByFillColor",
     "module": "modCommands_Shapes",
     "category": "Formas",

@@ -159,3 +159,36 @@ Public Sub Cmd_Text_RemoveManualLineBreaks()
 ErrorHandler:
     Notify "Falha ao remover as quebras manuais: " & Err.Description
 End Sub
+
+Public Sub Cmd_Text_RemoveRepeatedSpaces()
+    On Error GoTo ErrorHandler
+
+    Dim scopeName As String
+    scopeName = CurrentCommandScope()
+
+    Dim targetShapes As Collection
+    If Not TryGetShapesForScope(scopeName, targetShapes) Then
+        Notify "Operacao nao executada: o escopo " & CommandScopeLabel(scopeName) & " nao esta disponivel."
+        Exit Sub
+    End If
+
+    Dim shp As Shape
+    Dim changedCount As Long
+    Dim removedCount As Long
+
+    Application.StartNewUndoEntry
+
+    For Each shp In targetShapes
+        CollapseRepeatedSpacesInShape shp, changedCount, removedCount
+    Next shp
+
+    If removedCount = 0 Then
+        Notify "Nenhum espaco repetido entre palavras foi encontrado no escopo " & CommandScopeLabel(scopeName) & "."
+    Else
+        Notify removedCount & " espacos repetidos removidos de " & changedCount & " shapes no escopo " & CommandScopeLabel(scopeName) & "."
+    End If
+    Exit Sub
+
+ErrorHandler:
+    Notify "Falha ao remover os espacos repetidos: " & Err.Description
+End Sub

@@ -1,21 +1,21 @@
 {
-  "name": "frmMacroLauncher", "caption": "DFS Tools", "width": 440, "height": 466,
+  "name": "frmMacroLauncher", "caption": "DFS Tools", "width": 300, "height": 650,
   "controls": [
-    {"type":"Label", "name":"lblTitle", "caption":"Executar macro", "left":16, "top":12, "width":210, "height":24},
-    {"type":"Label", "name":"lblHint", "caption":"Enter executa  |  Esc fecha", "left":230, "top":17, "width":194, "height":16},
-    {"type":"Label", "name":"lblCategory", "caption":"Categoria", "left":16, "top":48, "width":100, "height":16},
-    {"type":"ComboBox", "name":"cboCategory", "left":16, "top":65, "width":408, "height":22, "style":2},
-    {"type":"Label", "name":"lblMacro", "caption":"Macro", "left":16, "top":99, "width":100, "height":16},
-    {"type":"ListBox", "name":"lstMacro", "left":16, "top":116, "width":408, "height":100},
-    {"type":"Label", "name":"lblScope", "caption":"ESCOPO", "left":16, "top":226, "width":62, "height":16},
-    {"type":"OptionButton", "name":"optScopeSelection", "caption":"Selecao", "left":94, "top":224, "width":82, "height":18},
-    {"type":"OptionButton", "name":"optScopeSlide", "caption":"Slide", "left":196, "top":224, "width":65, "height":18},
-    {"type":"OptionButton", "name":"optScopePresentation", "caption":"Apresentacao", "left":281, "top":224, "width":112, "height":18},
-    {"type":"Label", "name":"lblDescriptionTitle", "caption":"SOBRE ESTA MACRO", "left":16, "top":258, "width":160, "height":14},
-    {"type":"Label", "name":"lblDescription", "caption":"", "left":16, "top":276, "width":408, "height":30},
-    {"type":"Label", "name":"lblResultTitle", "caption":"RESULTADO", "left":16, "top":315, "width":160, "height":14},
-    {"type":"Label", "name":"lblResult", "caption":"Aguardando execucao.", "left":16, "top":333, "width":408, "height":42},
-    {"type":"CommandButton", "name":"cmdRun", "caption":"Executar", "left":226, "top":400, "width":94, "height":26},
-    {"type":"CommandButton", "name":"cmdClose", "caption":"Fechar", "left":330, "top":400, "width":94, "height":26}
+    {"type":"Label", "name":"lblTitle", "caption":"Executar macro", "left":14, "top":10, "width":266, "height":24},
+    {"type":"Label", "name":"lblHint", "caption":"Enter executa  |  Esc fecha", "left":14, "top":35, "width":266, "height":16},
+    {"type":"Label", "name":"lblCategory", "caption":"Categoria", "left":14, "top":58, "width":100, "height":14},
+    {"type":"ComboBox", "name":"cboCategory", "left":14, "top":74, "width":266, "height":22, "style":2},
+    {"type":"Label", "name":"lblMacro", "caption":"Macro", "left":14, "top":107, "width":100, "height":14},
+    {"type":"ListBox", "name":"lstMacro", "left":14, "top":123, "width":266, "height":218},
+    {"type":"Label", "name":"lblScope", "caption":"ESCOPO", "left":14, "top":352, "width":100, "height":14},
+    {"type":"OptionButton", "name":"optScopeSelection", "caption":"Selecao", "left":22, "top":370, "width":120, "height":18},
+    {"type":"OptionButton", "name":"optScopeSlide", "caption":"Slide", "left":22, "top":391, "width":120, "height":18},
+    {"type":"OptionButton", "name":"optScopePresentation", "caption":"Apresentacao", "left":22, "top":412, "width":140, "height":18},
+    {"type":"Label", "name":"lblDescriptionTitle", "caption":"SOBRE ESTA MACRO", "left":14, "top":441, "width":160, "height":14},
+    {"type":"Label", "name":"lblDescription", "caption":"", "left":14, "top":458, "width":266, "height":44},
+    {"type":"Label", "name":"lblResultTitle", "caption":"RESULTADO", "left":14, "top":513, "width":160, "height":14},
+    {"type":"Label", "name":"lblResult", "caption":"Aguardando execucao.", "left":14, "top":530, "width":266, "height":42},
+    {"type":"CommandButton", "name":"cmdRun", "caption":"Executar", "left":14, "top":583, "width":129, "height":27},
+    {"type":"CommandButton", "name":"cmdClose", "caption":"Fechar", "left":151, "top":583, "width":129, "height":27}
   ]
 }

@@ -4,6 +4,7 @@ Option Explicit
 
 Private launcher As frmMacroLauncher
 Private running As Boolean
+Private closingLauncher As Boolean
 
 Public Sub ShowMacroLauncher()
     Dim firstError As String
@@ -13,8 +14,8 @@ Public Sub ShowMacroLauncher()
     Exit Sub
 RetryWithFreshInstance:
     firstError = Err.Description
-    CloseMacroLauncher
     On Error GoTo Failed
+    CloseMacroLauncher
     ShowLauncherInstance
     Exit Sub
 Failed:
@@ -36,12 +37,33 @@ Public Sub RibbonShowMacroLauncher(ByVal control As Office.IRibbonControl)
 End Sub
 
 Public Sub CloseMacroLauncher()
-    On Error Resume Next
+    Dim target As frmMacroLauncher
+    Dim errorNumber As Long
+    Dim errorDescription As String
+
+    If closingLauncher Then Exit Sub
+    closingLauncher = True
+
+    On Error GoTo Failed
     CancelNotificationClear
     CancelPendingConfirmation
-    If Not launcher Is Nothing Then Unload launcher
+    Set target = launcher
     Set launcher = Nothing
-    On Error GoTo 0
+    If Not target Is Nothing Then Unload target
+Done:
+    closingLauncher = False
+    Exit Sub
+Failed:
+    errorNumber = Err.Number
+    errorDescription = Err.Description
+    If launcher Is Nothing Then Set launcher = target
+    closingLauncher = False
+    Err.Raise errorNumber, "DFS Tools", errorDescription
+End Sub
+
+Public Sub ReleaseMacroLauncher(ByVal terminatedLauncher As frmMacroLauncher)
+    If launcher Is Nothing Then Exit Sub
+    If launcher Is terminatedLauncher Then Set launcher = Nothing
 End Sub
 
 Public Sub ClearLauncherResult()
@@ -93,7 +115,7 @@ Public Sub PopulateCommands(ByVal cbo As Object, ByVal category As String)
     Dim item As Variant
     cbo.Clear
     cbo.ColumnCount = 4
-    cbo.ColumnWidths = "360 pt;0 pt;0 pt;0 pt"
+    cbo.ColumnWidths = CStr(cbo.Width - 22) & " pt;0 pt;0 pt;0 pt"
     For Each item In CommandCatalog()
         If category = "Todas" Or category = CStr(item(1)) Then
             cbo.AddItem CStr(item(2)) & " (" & CStr(item(1)) & ")"

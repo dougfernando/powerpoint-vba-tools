@@ -110,20 +110,28 @@ Failed:
 End Sub
 
 Private Sub cmdClose_Click()
+    On Error GoTo Failed
     CancelNotificationClear
     CancelPendingConfirmation
     modMacroLauncher.CloseMacroLauncher
+    Exit Sub
+Failed:
+    ShowResult "Nao foi possivel fechar: " & Err.Description, "error"
+    ScheduleNotificationClear
 End Sub
 
 Private Sub UserForm_QueryClose(Cancel As Integer, CloseMode As Integer)
-    If CloseMode = 0 Then
+    If Not Me.cmdRun.Enabled Then
         Cancel = True
-        If Me.cmdRun.Enabled Then
-            CancelNotificationClear
-            CancelPendingConfirmation
-            modMacroLauncher.CloseMacroLauncher
-        End If
+        Exit Sub
     End If
+
+    CancelNotificationClear
+    CancelPendingConfirmation
+End Sub
+
+Private Sub UserForm_Terminate()
+    modMacroLauncher.ReleaseMacroLauncher Me
 End Sub
 
 Public Sub ClearResult()
@@ -216,6 +224,10 @@ Private Sub ApplyVisualStyle()
         On Error Resume Next
         control.Font.Name = "Segoe UI"
         control.Font.Size = 9
+        Select Case TypeName(control)
+            Case "Label", "OptionButton"
+                control.BackStyle = 0
+        End Select
         On Error GoTo 0
     Next control
 
@@ -223,10 +235,11 @@ Private Sub ApplyVisualStyle()
         .Font.Size = 14
         .Font.Bold = True
         .ForeColor = RGB(31, 41, 55)
+        .TextAlign = 2
     End With
 
     With Me.lblHint
-        .TextAlign = 3
+        .TextAlign = 2
         .ForeColor = RGB(100, 116, 139)
     End With
 
